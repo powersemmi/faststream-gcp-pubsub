@@ -66,6 +66,7 @@ testing = [
     "pydantic-settings>=2.0.0,<3.0.0",
     "opentelemetry-sdk>=1.24.0,<2.0.0",
     "prometheus-client>=0.20.0,<0.30.0",
+    "pytest-cov==7.1.0",
 ]
 docs = [
     # the site is built on a current Python; the plugins need 3.11 or newer
@@ -145,3 +146,18 @@ markers = [
     "all",
 ]
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+branch = true
+source = ["faststream_gcp_pubsub"]
+# the CI jobs combine their data files, each written from its own checkout
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "@overload",
+    "raise NotImplementedError",
+]

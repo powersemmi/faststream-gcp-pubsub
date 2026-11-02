@@ -19,8 +19,124 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect changes
+    # Every other job needs this one, so the draft gate lives here: a skipped gate skips them all.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      tests: ${{ steps.filter.outputs.tests }}
+      doctests: ${{ steps.filter.outputs.doctests }}
+      docs: ${{ steps.filter.outputs.docs }}
+      pages: ${{ steps.filter.outputs.pages }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+      dependencies: ${{ steps.filter.outputs.dependencies }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          # A change to this workflow runs every job it gates, so the jobs it edits are proved.
+          filters: |
+            python:
+              - '**/*.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'ruff.toml'
+              - '.github/workflows/ci.yaml'
+            tests:
+              - 'faststream_gcp_pubsub/**'
+              - 'tests/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/ci.yaml'
+            doctests:
+              # the examples are checked against the pages, the README and the docstrings
+              - 'docs/docs/**'
+              - 'docs/docs_src/**'
+              - 'README.md'
+              - 'tests/docs/**'
+              - 'tests/conftest.py'
+              - 'faststream_gcp_pubsub/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/ci.yaml'
+            docs:
+              - 'docs/**'
+              # the API reference renders the docstrings
+              - 'faststream_gcp_pubsub/**'
+              # the pages embed regions of the docs tests and the compose file
+              - 'tests/docs/**'
+              - 'docker-compose.yaml'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/ci.yaml'
+            pages:
+              - 'docs/docs/**'
+              - 'README.md'
+              - 'lychee.toml'
+              - '.github/workflows/ci.yaml'
+            workflows:
+              - '.github/workflows/**'
+              - '.github/zizmor.yml'
+              # the versions of actionlint and zizmor
+              - 'pyproject.toml'
+              - 'uv.lock'
+            dependencies:
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/ci.yaml'
+
+  # File hygiene and spelling apply to every file, so this job runs on every change.
+  pre-commit:
+    name: File hygiene and spelling
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.13"
+      - name: Run the pre-commit hooks
+        env:
+          # the lint and the workflows jobs run these hooks
+          SKIP: ruff,ruff-format,mypy,zizmor,actionlint
+        run: uvx pre-commit@4.7.0 run --all-files --show-diff-on-failure
+
+  workflows:
+    name: Workflows
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.13"
+      - name: Install Dependencies
+        run: uv sync --locked --only-group lint
+      # actionlint runs shellcheck over the `run:` scripts
+      - name: actionlint
+        run: uv run --no-sync actionlint
+      - name: zizmor
+        run: uv run --no-sync zizmor .github
+
   lint:
-    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -38,9 +154,13 @@ jobs:
         run: uv run ruff format --check
       - name: Mypy
         run: uv run mypy
+      # collection sees the live tests too, so no emulator is needed
+      - name: Fail on fixtures no test reads
+        run: uv run pytest --collect-only -q -m "" -p tests.unused_fixtures
 
   docs:
-    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -54,8 +174,47 @@ jobs:
       - name: Build docs
         run: uv run --locked --group docs mkdocs build --strict -f docs/mkdocs.yml
 
+  # A third-party site going down is no reason to hold a merge, so only a change to the pages
+  # or the README pays for their external links.
+  links:
+    name: External links
+    needs: changes
+    if: needs.changes.outputs.pages == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the external links of the guides and the README
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --config lychee.toml 'docs/docs/**/*.md' README.md
+          fail: true
+          token: ${{ github.token }}
+
+  doc-tests:
+    name: Doc tests
+    needs: changes
+    if: needs.changes.outputs.doctests == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.13"
+      - name: Install Dependencies
+        run: uv sync --locked
+      # every example of the pages, the README and the docstrings, in process
+      - name: Test
+        run: uv run pytest -vv tests/docs
+
   test:
-    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.tests == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -71,13 +230,49 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Dependencies
         run: uv sync --locked
+      # the doc tests job runs tests/docs
       - name: Test
-        run: uv run pytest -vv
+        run: uv run pytest -vv --ignore=tests/docs --cov --cov-report=
+      - name: Rename coverage file
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: mkdir coverage && mv .coverage "coverage/.coverage.py${PYTHON_VERSION}"
+      - name: Store coverage files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: .coverage.py${{ matrix.python-version }}
+          path: coverage
+          if-no-files-found: error
+          include-hidden-files: true
+
+  # The lower bounds of the dependencies are a promise the lock file never exercises.
+  test-lowest:
+    name: Test on the lowest dependency versions
+    needs: changes
+    if: needs.changes.outputs.tests == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.10"
+      - name: Install the lowest versions the package declares
+        run: uv sync --resolution lowest-direct
+      - name: Test
+        run: uv run --no-sync pytest -vv --ignore=tests/docs
 
   test-emulator:
-    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'
     needs:
+      - changes
       - test
+    # the live doc tests run here too, so a change to the examples reaches the emulator
+    if: >-
+      !cancelled()
+      && contains(fromJSON('["success", "skipped"]'), needs.test.result)
+      && (needs.changes.outputs.tests == 'true' || needs.changes.outputs.doctests == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -108,27 +303,134 @@ jobs:
       - name: Test
         env:
           PUBSUB_EMULATOR_HOST: localhost:8085
-        run: uv run pytest -vv -m gcp
+        run: uv run pytest -vv -m gcp --cov --cov-report=
+      - name: Rename coverage file
+        run: mkdir coverage && mv .coverage coverage/.coverage.emulator
+      - name: Store coverage files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: .coverage.emulator
+          path: coverage
+          if-no-files-found: error
+          include-hidden-files: true
       - name: Emulator logs
         if: failure()
         run: docker logs pubsub-emulator
 
-  # This job does nothing and is only used for the branch protection.
-  # from: https://github.com/re-actors/alls-green
-  # It must always run, otherwise GitHub marks it skipped when a dependency fails,
-  # and a skipped required check may be read as success.
-  result:
-    name: CI result
-    if: always()
+  # Runs when both test jobs ran: the in-process matrix and the emulator together cover the package.
+  coverage:
+    name: Coverage
     needs:
-      - lint
-      - docs
       - test
       - test-emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # diff-cover compares against the base branch
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.13"
+      - name: Get coverage files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: .coverage*
+          path: coverage
+          merge-multiple: true
+      - name: Install Dependencies
+        run: uv sync --locked --only-group testing
+      - name: Combine the in-process and the live runs
+        run: |
+          uv run --no-sync coverage combine coverage
+          # the floor of the whole package; each job alone covers less, so it is not in the config
+          uv run --no-sync coverage report --fail-under 90
+          uv run --no-sync coverage xml
+      # The total hides a pull request that ships untested: 90% of the lines it changes in the
+      # package have to run under some job.
+      - name: Require the changed lines of the package to be covered
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: >
+          uvx diff-cover@10.5.1 coverage.xml
+          --compare-branch "origin/$BASE_REF"
+          --include 'faststream_gcp_pubsub/**'
+          --fail-under 90
+          --format markdown:diff-cover.md
+      - name: Show the diff coverage in the job summary
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          if [ -f diff-cover.md ]; then cat diff-cover.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+  dependency-review:
+    name: Dependency review
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.dependencies == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    needs: changes
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      matrix:
+        language: [actions, python]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          category: /language:${{ matrix.language }}
+
+  # The one check the `main` ruleset requires: it speaks for every job above, so a job that comes,
+  # goes or is renamed never touches the ruleset. A job skipped by its path filter counts as
+  # passed, so a run of skipped jobs ends green and the approval workflow still approves. A draft
+  # skips this job with the rest, and the run that marking it ready starts reports again.
+  result:
+    name: CI result
+    if: >-
+      always()
+      && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    needs:
+      - changes
+      - pre-commit
+      - workflows
+      - lint
+      - docs
+      - links
+      - doc-tests
+      - test
+      - test-lowest
+      - test-emulator
+      - coverage
+      - dependency-review
+      - codeql
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: lint, docs, test, test-emulator
+          allowed-skips: >-
+            workflows, lint, docs, links, doc-tests, test, test-lowest, test-emulator,
+            coverage, dependency-review, codeql
           jobs: ${{ toJSON(needs) }}

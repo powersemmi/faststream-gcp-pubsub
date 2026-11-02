@@ -1,0 +1,13 @@
+# External links of the guides and the README. `mkdocs build --strict` already
+# covers the internal ones.
+no_progress = true
+max_retries = 5
+# seconds; a host that resets the connection needs longer than the default 1s
+retry_wait_time = 20
+timeout = 30
+accept = ["200..=299", "429"]
+
+exclude = [
+    # addresses of the reader's own running application and emulator
+    '^https?://(localhost|127\.0\.0\.1)',
+]
