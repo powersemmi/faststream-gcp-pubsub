@@ -7,7 +7,7 @@ import pytest
 from fastapi import Depends, FastAPI, Header
 from fastapi.testclient import TestClient
 from faststream import Response
-from faststream.exceptions import FeatureNotSupportedException
+from faststream.exceptions import FeatureNotSupportedException, IncorrectState
 
 from faststream_gcp_pubsub import (
     PubSubBroker,
@@ -21,7 +21,7 @@ from tests.brokers.base.option_surface import (
     assert_every_level_takes_the_options_the_broker_takes,
 )
 
-from .basic import PubSubMemoryTestcaseConfig, PubSubTestcaseConfig
+from .basic import SETTINGS, PubSubMemoryTestcaseConfig, PubSubTestcaseConfig
 
 
 def test_fastapi_router_takes_the_options_the_broker_takes() -> None:
@@ -33,10 +33,32 @@ def test_fastapi_router_takes_the_options_the_broker_takes() -> None:
     )
 
 
+@pytest.mark.asyncio()
+async def test_router_without_project_refuses_to_connect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Like the broker: no project is guessed, so a resource never lands in a project the
+    # service did not name.
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
+    router = StreamRouter(emulator_host="localhost:1")
+
+    with pytest.raises(IncorrectState, match="project_id"):
+        await router.broker.connect()
+
+
+class LiveStreamRouter(StreamRouter):
+    """The FastAPI router a live test builds: the project and emulator of the suite."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("project_id", SETTINGS.project_id)
+        kwargs.setdefault("emulator_host", SETTINGS.emulator_host)
+        super().__init__(*args, **kwargs)
+
+
 @pytest.mark.connected()
 @pytest.mark.gcp()
 class TestRouter(PubSubTestcaseConfig, FastAPITestcase):
-    router_class = StreamRouter
+    router_class = LiveStreamRouter
     broker_router_class = BrokerRouter
 
 
