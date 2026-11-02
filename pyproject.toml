@@ -50,6 +50,11 @@ lint = [
     "ruff==0.17.2",
     "mypy==2.4.0",
     "types-protobuf",
+    "codespell==2.4.3",
+    # the workflows: actionlint runs shellcheck over the `run:` scripts
+    "actionlint-py==1.7.12.25",
+    "shellcheck-py==0.11.0.1",
+    "zizmor==1.31.1; python_version >= '3.11'",
 ]
 testing = [
     "dirty-equals==0.11",

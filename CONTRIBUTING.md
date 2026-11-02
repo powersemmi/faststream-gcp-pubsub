@@ -12,7 +12,7 @@ cd faststream-gcp-pubsub
 uv sync
 ```
 
-Install the git hooks (ruff, mypy, codespell, commit message check):
+Install the git hooks (ruff, mypy, codespell, actionlint, zizmor, commit message check):
 
 ```bash
 uvx pre-commit install --install-hooks
@@ -22,8 +22,9 @@ uvx pre-commit install --hook-type commit-msg
 ## Lint and type checks
 
 ```bash
-just lint   # ruff check, ruff format --check, mypy (strict)
-just fmt    # apply ruff formatting and safe fixes
+just lint             # ruff check, ruff format --check, mypy (strict), unused test fixtures
+just lint-workflows   # actionlint and zizmor over .github
+just fmt              # apply ruff formatting and safe fixes
 ```
 
 ## Tests
@@ -41,6 +42,10 @@ just emulator-up
 just test-gcp
 just emulator-down
 ```
+
+Every Python example of the documentation is a file under `docs/docs_src` that a test under
+`tests/docs` runs. A page includes the file; the README and the docstrings copy an excerpt of
+it verbatim, and `tests/docs/test_examples_are_tested.py` checks that they still match.
 
 `just check` runs lint and the in-process suite. A change that touches the transport should also pass `just test-gcp`.
 

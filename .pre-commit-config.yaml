@@ -25,14 +25,24 @@ repos:
     hooks:
     -   id: codespell
 
--   repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.31.1
-    hooks:
-    -   id: zizmor
-        files: ^\.github/workflows/
-
 -   repo: local
     hooks:
+    -   id: zizmor
+        name: zizmor
+        entry: uv run zizmor .github
+        language: system
+        files: ^\.github/
+        require_serial: true
+        pass_filenames: false
+
+    -   id: actionlint
+        name: actionlint
+        entry: uv run actionlint
+        language: system
+        files: ^\.github/workflows/
+        require_serial: true
+        pass_filenames: false
+
     -   id: ruff
         name: Ruff check
         entry: uv run ruff check

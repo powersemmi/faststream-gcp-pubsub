@@ -1,2 +1,4 @@
 [codespell]
-skip = uv.lock,.git,.venv,.mypy_cache,.ruff_cache,.pytest_cache
+skip = uv.lock,.git,.venv,.mypy_cache,.ruff_cache,.pytest_cache,docs/site
+# `Dependant` is the FastDepends class the broker API passes through
+ignore-words-list = Dependant,dependant
