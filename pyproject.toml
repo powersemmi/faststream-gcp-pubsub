@@ -63,14 +63,15 @@ testing = [
     "prometheus-client>=0.20.0,<0.30.0",
 ]
 docs = [
-    "mkdocs==1.6.1",
-    "mkdocs-material==9.7.7",
-    "mkdocstrings[python]==1.0.6",
-    "mkdocstrings-python==2.0.9",
-    "mkdocs-autorefs==1.4.4",
-    # newer releases break mkdocstrings 1.0.2 (`Highlight.__init__() missing md`)
-    "pymdown-extensions==12.3",
-    "markdown==3.10.3",
+    # the site is built on a current Python; the plugins need 3.11 or newer
+    "mkdocs==1.6.1; python_version >= '3.11'",
+    "mkdocs-material==9.7.7; python_version >= '3.11'",
+    "mkdocstrings[python]==1.0.8; python_version >= '3.11'",
+    "mkdocstrings-python==2.0.10; python_version >= '3.11'",
+    "mkdocs-autorefs==1.4.5; python_version >= '3.11'",
+    # 12.x needs mkdocstrings 1.0.8 or newer (`Highlight.__init__() missing md` before it)
+    "pymdown-extensions==12.3; python_version >= '3.11'",
+    "markdown==3.10.3; python_version >= '3.11'",
 ]
 dev = [
     { include-group = "lint" },
