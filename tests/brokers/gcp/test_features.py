@@ -62,7 +62,7 @@ class TestFeatures(PubSubTestcaseConfig):
         assert content_type == "application/json"
 
     async def test_response_sets_reply_ordering_key(
-        self, queue: str, admin: Admin, event: asyncio.Event
+        self, queue: str, admin: Admin
     ) -> None:
         broker = self.get_broker()
         out = queue + "-out"

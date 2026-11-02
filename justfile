@@ -9,6 +9,7 @@ lint:
     uv run ruff check
     uv run ruff format --check
     uv run mypy
+    uv run pytest --collect-only -q -m "" -p tests.unused_fixtures
 
 fmt:
     uv run ruff format

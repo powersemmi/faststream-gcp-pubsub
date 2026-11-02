@@ -21,7 +21,7 @@ from .basic import PubSubLivePrometheusSettings, PubSubPrometheusSettings
 
 
 class RequestNotSupported:
-    async def test_rpc_request(self, queue: str, event: asyncio.Event) -> None:
+    async def test_rpc_request(self, queue: str) -> None:
         # Pub/Sub has no request/reply: the metrics of a request cannot exist.
         broker = self.get_broker(  # type: ignore[attr-defined]
             middlewares=(self.get_middleware(registry=CollectorRegistry()),)  # type: ignore[attr-defined]

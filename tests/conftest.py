@@ -1,11 +1,10 @@
 import asyncio
 from collections.abc import Generator
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
-from faststream._internal.context import ContextRepo
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -47,16 +46,3 @@ def mock2() -> Generator[MagicMock, Any, None]:
     m = MagicMock()
     yield m
     m.reset_mock()
-
-
-@pytest.fixture()
-def async_mock() -> Generator[AsyncMock, Any, None]:
-    """Should be generator to share mock between tests."""
-    m = AsyncMock()
-    yield m
-    m.reset_mock()
-
-
-@pytest.fixture()
-def context() -> ContextRepo:
-    return ContextRepo()

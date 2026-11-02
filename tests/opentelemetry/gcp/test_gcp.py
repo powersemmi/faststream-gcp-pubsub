@@ -1,6 +1,5 @@
 import asyncio
 from typing import Any
-from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -99,7 +98,6 @@ class TelemetryCases(LocalTelemetryTestcase):
         tracer_provider: TracerProvider,
         trace_exporter: InMemorySpanExporter,
         event: asyncio.Event,
-        mock: MagicMock,
     ) -> None:
         mid = self.telemetry_middleware_class(tracer_provider=tracer_provider)
         broker: PubSubBroker = self.get_broker(middlewares=(mid,))
