@@ -167,8 +167,9 @@ class TestTelemetry(PubSubInProcessTestcaseConfig, TelemetryCases):
 @pytest.mark.connected()
 @pytest.mark.gcp()
 @pytest.mark.asyncio()
+@pytest.mark.usefixtures("reply_topics")
 class TestTelemetryLive(PubSubTestcaseConfig, TelemetryCases):
-    @pytest_asyncio.fixture(autouse=True)
+    @pytest_asyncio.fixture()
     async def reply_topics(self, admin: Admin, queue: str) -> None:
         # The shared finalize-tokens case publishes the handler result to these topics, and
         # the service refuses a publish to a topic nobody created.

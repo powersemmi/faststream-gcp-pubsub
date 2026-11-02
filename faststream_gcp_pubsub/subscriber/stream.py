@@ -36,7 +36,16 @@ class StreamingPull:
     Yields raw ``ReceivedMessage`` protobufs, each already leased in the settler.
     """
 
-    __slots__ = ("_call", "_client", "_client_id", "_log", "_settler", "_stopped", "path")
+    __slots__ = (
+        "_attempt",
+        "_call",
+        "_client",
+        "_client_id",
+        "_log",
+        "_settler",
+        "_stopped",
+        "path",
+    )
 
     def __init__(
         self,
@@ -53,6 +62,8 @@ class StreamingPull:
         self._client_id = uuid4().hex
         self._call: Any = None
         self._stopped = False
+        # failed opens in a row; a delivered response resets it
+        self._attempt = 0
 
     async def _requests(self) -> AsyncIterator[StreamingPullRequest]:
         flow = self._settler.flow
@@ -67,33 +78,37 @@ class StreamingPull:
             await asyncio.sleep(HEARTBEAT)
             yield StreamingPullRequest()
 
-    async def __aiter__(self) -> AsyncIterator[Any]:
-        attempt = 0
+    async def _read(self) -> AsyncIterator[Any]:
+        """One stream, from open to its first error; every delivery is leased first."""
         settler = self._settler
+        self._call = await self._client.streaming_pull(
+            requests=self._requests(),
+            metadata=(("x-goog-request-params", f"subscription={self.path}"),),
+        )
+        async for response in self._call:
+            self._attempt = 0
+            raw = StreamingPullResponse.pb(response)
+            if raw.HasField("subscription_properties"):
+                settler.exactly_once = (
+                    raw.subscription_properties.exactly_once_delivery_enabled
+                )
+            for received in raw.received_messages:
+                await settler.lease(received.ack_id)
+                yield received
+
+    async def __aiter__(self) -> AsyncIterator[Any]:
         while not self._stopped:
             try:
-                self._call = await self._client.streaming_pull(
-                    requests=self._requests(),
-                    metadata=(("x-goog-request-params", f"subscription={self.path}"),),
-                )
-                async for response in self._call:
-                    attempt = 0
-                    raw = StreamingPullResponse.pb(response)
-                    if raw.HasField("subscription_properties"):
-                        settler.exactly_once = (
-                            raw.subscription_properties.exactly_once_delivery_enabled
-                        )
-                    for received in raw.received_messages:
-                        await settler.lease(received.ack_id)
-                        yield received
+                async for received in self._read():
+                    yield received
             # the stream is reopened in this loop, so the handler belongs inside it
-            except exceptions.GoogleAPICallError as e:  # noqa: PERF203
+            except exceptions.GoogleAPICallError as e:  # ruff: ignore[try-except-in-loop]
                 if self._stopped:
                     return
                 if not isinstance(e, RETRYABLE):
                     raise
-                attempt += 1
-                delay = min(0.1 * 2**attempt, MAX_BACKOFF)
+                self._attempt += 1
+                delay = min(0.1 * 2**self._attempt, MAX_BACKOFF)
                 self._log(
                     f"Streaming pull of {self.path} interrupted ({e!r}), reopening in {delay:.1f}s",
                     logging.WARNING,

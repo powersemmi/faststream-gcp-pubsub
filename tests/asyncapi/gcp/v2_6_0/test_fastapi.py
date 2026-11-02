@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 from faststream.specification import Specification
 
 from faststream_gcp_pubsub.fastapi import PubSubRouter
@@ -8,6 +9,9 @@ from tests.asyncapi.base.v2_6_0.arguments import FastAPICompatible
 from tests.asyncapi.base.v2_6_0.fastapi import FastAPITestCase
 from tests.asyncapi.base.v2_6_0.publisher import PublisherTestcase
 from tests.asyncapi.gcp.described_channel import DescribedChannelMixin
+
+# the documents are compared against the Google Cloud endpoint, not the machine's emulator
+pytestmark = pytest.mark.usefixtures("no_ambient_emulator")
 
 
 class TestRouterArguments(DescribedChannelMixin, FastAPITestCase, FastAPICompatible):

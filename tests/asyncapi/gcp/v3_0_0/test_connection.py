@@ -1,8 +1,12 @@
+import pytest
 from faststream.specification import Tag
 from google.auth.credentials import AnonymousCredentials
 
 from faststream_gcp_pubsub import GCPSecurity, PubSubBroker
 from tests.asyncapi.base.v3_0_0 import get_3_0_0_schema
+
+# the documents are compared against the Google Cloud endpoint, not the machine's emulator
+pytestmark = pytest.mark.usefixtures("no_ambient_emulator")
 
 
 def test_base() -> None:

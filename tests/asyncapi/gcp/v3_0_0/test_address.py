@@ -1,5 +1,10 @@
+import pytest
+
 from faststream_gcp_pubsub import PubSubBroker, PubSubRouter
 from tests.asyncapi.base.v3_0_0.basic import get_3_0_0_schema
+
+# the documents are compared against the Google Cloud endpoint, not the machine's emulator
+pytestmark = pytest.mark.usefixtures("no_ambient_emulator")
 
 
 def test_a_subscriber_channel_is_addressed_by_its_topic() -> None:
