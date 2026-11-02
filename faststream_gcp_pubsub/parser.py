@@ -18,7 +18,7 @@ class PubSubParser:
 
     __slots__ = ()
 
-    async def parse_message(self, message: "PubSubRawMessage") -> PubSubMessage:  # noqa: PLR6301
+    async def parse_message(self, message: "PubSubRawMessage") -> PubSubMessage:  # ruff: ignore[no-self-use]
         headers = message.attributes
         return PubSubMessage(
             raw_message=message,
@@ -30,7 +30,7 @@ class PubSubParser:
             message_id=message.message_id,
         )
 
-    async def decode_message(  # noqa: PLR6301
+    async def decode_message(  # ruff: ignore[no-self-use]
         self, msg: "StreamMessage[PubSubRawMessage]"
     ) -> "DecodedMessage":
         return decode_message(msg)

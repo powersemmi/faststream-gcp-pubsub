@@ -44,7 +44,7 @@ class PubSubMemoryTestcaseConfig(PubSubTestcaseConfig):
 
     @override
     def patch_broker(self, *brokers: PubSubBroker, **kwargs: Any) -> Any:
-        from faststream_gcp_pubsub.testing import TestPubSubBroker  # noqa: PLC0415
+        from faststream_gcp_pubsub.testing import TestPubSubBroker  # ruff: ignore[import-outside-top-level]
 
         return TestPubSubBroker(*brokers, **kwargs)
 
@@ -58,7 +58,7 @@ class InProcessBroker:
     """
 
     def __init__(self, broker: PubSubBroker) -> None:
-        from faststream_gcp_pubsub.testing import TestPubSubBroker  # noqa: PLC0415
+        from faststream_gcp_pubsub.testing import TestPubSubBroker  # ruff: ignore[import-outside-top-level]
 
         self._broker = broker
         self._test = TestPubSubBroker(broker)

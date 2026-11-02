@@ -206,14 +206,14 @@ class InMemoryConnection:
         self.publisher = _InMemoryPublisherClient()
         self.subscriber = _InMemorySubscriberClient(service)
 
-    async def ready(self, timeout: float) -> bool:  # noqa: PLR6301
+    async def ready(self, timeout: float) -> bool:  # ruff: ignore[no-self-use]
         return True
 
     async def close(self) -> None: ...
 
 
 class _InMemoryPublisherClient:
-    async def create_topic(self, request: Any) -> None:  # noqa: PLR6301
+    async def create_topic(self, request: Any) -> None:  # ruff: ignore[no-self-use]
         # Topology is the service's concern, not the test's: a declaration always succeeds.
         validate_resource_id("topic", request.name)
 
@@ -238,7 +238,7 @@ class _InMemorySubscriberClient:
     def __init__(self, service: InMemoryService) -> None:
         self._service = service
 
-    async def create_subscription(self, request: Any) -> None:  # noqa: PLR6301
+    async def create_subscription(self, request: Any) -> None:  # ruff: ignore[no-self-use]
         validate_resource_id("subscription", request.name)
 
     async def acknowledge(self, subscription: str, ack_ids: list[str]) -> None: ...

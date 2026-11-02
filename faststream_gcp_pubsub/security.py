@@ -30,14 +30,14 @@ class GCPSecurity(BaseSecurity):
     @classmethod
     def from_service_account_file(cls, filename: str) -> "GCPSecurity":
         """Credentials of a service account from its JSON key file."""
-        from google.oauth2 import service_account  # noqa: PLC0415
+        from google.oauth2 import service_account  # ruff: ignore[import-outside-top-level]
 
         return cls(service_account.Credentials.from_service_account_file(filename))
 
     @classmethod
     def from_service_account_info(cls, info: dict[str, Any]) -> "GCPSecurity":
         """Credentials of a service account from its parsed JSON key."""
-        from google.oauth2 import service_account  # noqa: PLC0415
+        from google.oauth2 import service_account  # ruff: ignore[import-outside-top-level]
 
         return cls(service_account.Credentials.from_service_account_info(info))
 

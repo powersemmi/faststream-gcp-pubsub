@@ -59,7 +59,7 @@ class Admin:
             )
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture()
 async def admin(
     settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> AsyncIterator[Admin]:

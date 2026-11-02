@@ -85,7 +85,7 @@ class PubSubTopic:
 
     def to_proto(self, project_id: str) -> "Topic":
         """The topic resource the broker creates."""
-        from google.pubsub_v1 import Topic  # noqa: PLC0415
+        from google.pubsub_v1 import Topic  # ruff: ignore[import-outside-top-level]
 
         options: dict[str, Any] = {"name": self.path(project_id), "labels": self.labels}
         if self.message_retention_duration is not None:
@@ -131,7 +131,7 @@ class PubSubSubscription:
 
     def to_proto(self, project_id: str, topic: str) -> "Subscription":
         """The subscription resource the broker creates, attached to ``topic`` (a full name)."""
-        from google.pubsub_v1 import Subscription  # noqa: PLC0415
+        from google.pubsub_v1 import Subscription  # ruff: ignore[import-outside-top-level]
 
         options: dict[str, Any] = {
             "name": self.path(project_id),
