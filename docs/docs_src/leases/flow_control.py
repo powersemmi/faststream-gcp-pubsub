@@ -2,7 +2,9 @@ from faststream import FastStream
 
 from faststream_gcp_pubsub import FlowControl, PubSubBroker
 
+# --8<-- [start:broker]
 broker = PubSubBroker(project_id="my-project", graceful_timeout=30.0)
+# --8<-- [end:broker]
 app = FastStream(broker)
 
 

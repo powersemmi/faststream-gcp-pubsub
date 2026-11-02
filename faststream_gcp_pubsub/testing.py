@@ -39,7 +39,8 @@ class TestPubSubBroker(TestBroker[PubSubBroker, Any], broker=PubSubBroker):
     Examples:
         >>> async with TestPubSubBroker(broker) as br:
         ...     await br.publish({"id": 1}, "orders")
-        ...     handler.mock.assert_called_once_with({"id": 1})
+        ...
+        ...     bill.mock.assert_called_once_with({"id": 1})
     """
 
     @overload

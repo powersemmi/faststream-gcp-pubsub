@@ -43,6 +43,6 @@ On shutdown the subscriber stops reading, waits for the handlers in work up to t
 `graceful_timeout` (15 seconds by default), sends the pending acks and returns the messages it
 still holds to the service, which delivers them to another consumer.
 
-```python
-broker = PubSubBroker(project_id="my-project", graceful_timeout=30.0)
+```python title="service.py"
+--8<-- "docs/docs_src/leases/flow_control.py:broker"
 ```

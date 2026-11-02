@@ -17,9 +17,8 @@ The broker's `dependencies` are FastAPI `dependencies` here, and its `tags` are
 
 Test the router with the broker it owns:
 
-```python
-async with TestPubSubBroker(router.broker) as br:
-    await br.publish({"id": 1}, "orders")
+```python title="test_app.py"
+--8<-- "tests/docs/fastapi/test_app.py:test"
 ```
 
 The module also exports `PubSubMessage`, `PubSubBroker`, `Connection`, `Context`, `ContextRepo`

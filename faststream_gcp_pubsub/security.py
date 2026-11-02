@@ -16,9 +16,9 @@ class GCPSecurity(BaseSecurity):
     ``GOOGLE_APPLICATION_CREDENTIALS`` file, the gcloud login, or the metadata server).
 
     Examples:
-        >>> from google.oauth2 import service_account
-        >>> creds = service_account.Credentials.from_service_account_file("key.json")
-        >>> broker = PubSubBroker(project_id="my-project", security=GCPSecurity(creds))
+        >>> def from_credentials() -> PubSubBroker:
+        ...     credentials = service_account.Credentials.from_service_account_file("key.json")
+        ...     return PubSubBroker(project_id="my-project", security=GCPSecurity(credentials))
     """
 
     __slots__ = ("credentials",)

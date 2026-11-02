@@ -25,9 +25,8 @@ resources, in the test broker routing and in the AsyncAPI document.
 Both arguments also take a declaration, [`PubSubSubscription`](declaring-resources.md) and
 `PubSubTopic`, which describes how to create the resource:
 
-```python
-@broker.subscriber(PubSubSubscription("orders-billing", declare=True), topic=PubSubTopic("orders"))
-async def bill(order: dict[str, int]) -> None: ...
+```python title="service.py"
+--8<-- "docs/docs_src/topics/declarations.py"
 ```
 
 See [Declaring resources](declaring-resources.md) for every setting.
