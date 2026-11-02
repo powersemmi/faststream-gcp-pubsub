@@ -30,7 +30,7 @@ async def bill(order: Order) -> dict[str, int]:
 
 @app.after_startup
 async def place_order() -> None:
-    await broker.publish(Order(id=1, amount=9.5), "orders")
+    await shipments.publish(Order(id=1, amount=9.5))
 ```
 
 ```shell
