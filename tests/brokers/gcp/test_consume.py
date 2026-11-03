@@ -1,7 +1,10 @@
 import asyncio
+import logging
+from datetime import timedelta
 from typing import Any
 from unittest.mock import MagicMock
 
+import anyio
 import pytest
 from faststream import AckPolicy
 from faststream.exceptions import IncorrectState
@@ -9,8 +12,11 @@ from faststream.exceptions import IncorrectState
 from faststream_gcp_pubsub import (
     DeadLetterPolicy,
     FlowControl,
+    PubSubBroker,
     PubSubMessage,
     PubSubSubscription,
+    PubSubTopic,
+    RetryPolicy,
 )
 from tests.brokers.base.consume import BrokerRealConsumeTestcase
 
@@ -152,8 +158,15 @@ class TestConsume(PubSubTestcaseConfig, BrokerRealConsumeTestcase):
                 ack_deadline_seconds=42,
                 enable_message_ordering=True,
                 filter='attributes.kind = "a"',
+                message_retention_duration=timedelta(hours=3),
+                retry_policy=RetryPolicy(
+                    minimum_backoff=timedelta(seconds=20),
+                    maximum_backoff=timedelta(seconds=40),
+                ),
             ),
-            topic="t-" + queue,
+            topic=PubSubTopic(
+                "t-" + queue, message_retention_duration=timedelta(hours=2)
+            ),
         )
 
         @sub
@@ -169,3 +182,69 @@ class TestConsume(PubSubTestcaseConfig, BrokerRealConsumeTestcase):
         assert created.ack_deadline_seconds == 42
         assert created.enable_message_ordering
         assert created.filter == 'attributes.kind = "a"'
+        assert created.message_retention_duration == timedelta(hours=3)
+        assert created.retry_policy.minimum_backoff == timedelta(seconds=20)
+        assert created.retry_policy.maximum_backoff == timedelta(seconds=40)
+        created_topic = await admin.publisher.get_topic(
+            topic=admin.topic_path("t-" + queue)
+        )
+        assert created_topic.message_retention_duration == timedelta(hours=2)
+
+    async def test_workers_handle_deliveries_at_once(self, queue: str) -> None:
+        broker = self.get_broker()
+        both_in_flight = asyncio.Event()
+        in_flight = 0
+
+        @broker.subscriber(*self.get_subscriber_params(queue)[0], max_workers=2)
+        async def handler(m: Any) -> None:
+            nonlocal in_flight
+            in_flight += 1
+            if in_flight == 2:
+                both_in_flight.set()
+            # one worker alone never lets the second delivery in
+            await asyncio.wait_for(both_in_flight.wait(), self.timeout)
+
+        async with broker:
+            await broker.start()
+            await broker.publish_batch("a", "b", topic=queue)
+            await asyncio.wait_for(both_in_flight.wait(), self.timeout)
+
+    async def test_lost_subscription_stops_and_is_logged(
+        self, queue: str, admin: Admin
+    ) -> None:
+        logger = MagicMock()
+        broker = self.get_broker(logger=logger)
+
+        @broker.subscriber(*self.get_subscriber_params(queue)[0])
+        async def handler(m: Any) -> None: ...
+
+        async with broker:
+            await broker.start()
+            await admin.subscriber.delete_subscription(
+                subscription=admin.subscription_path(queue)
+            )
+            with anyio.fail_after(self.timeout):
+                while not any(  # ruff: ignore[async-busy-wait]
+                    level == logging.ERROR
+                    and text.startswith(f"Subscription {queue} stopped: NotFound")
+                    for (level, text), _ in logger.log.call_args_list
+                ):
+                    await asyncio.sleep(0.1)
+
+
+def test_flow_control_refuses_impossible_limits() -> None:
+    with pytest.raises(ValueError, match="max_messages"):
+        FlowControl(max_messages=0)
+    with pytest.raises(ValueError, match="ack_deadline"):
+        FlowControl(ack_deadline=9)
+    with pytest.raises(ValueError, match="ack_deadline"):
+        FlowControl(ack_deadline=601)
+
+
+def test_workers_beyond_the_flow_limit_are_refused() -> None:
+    broker = PubSubBroker(project_id="p")
+
+    with pytest.raises(ValueError, match="max_workers=3 exceeds"):
+        broker.subscriber(
+            "orders", max_workers=3, flow_control=FlowControl(max_messages=2)
+        )

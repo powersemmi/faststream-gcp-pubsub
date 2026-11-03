@@ -346,7 +346,7 @@ jobs:
         run: |
           uv run --no-sync coverage combine coverage
           # the floor of the whole package; each job alone covers less, so it is not in the config
-          uv run --no-sync coverage report --fail-under 90
+          uv run --no-sync coverage report --fail-under 95
           uv run --no-sync coverage xml
       # A repository Coveralls does not know yet rejects the upload; that is no reason to fail CI.
       - name: Upload the combined coverage to Coveralls

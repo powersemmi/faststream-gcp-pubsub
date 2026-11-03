@@ -148,6 +148,14 @@ class TestRouting:
             with pytest.raises(FeatureNotSupportedException):
                 await br.request("hi", queue)
 
+    async def test_publisher_request_is_not_supported(self, queue: str) -> None:
+        broker = PubSubBroker(project_id="p")
+        publisher = broker.publisher(queue)
+
+        async with TestPubSubBroker(broker):
+            with pytest.raises(FeatureNotSupportedException):
+                await publisher.request("hi")
+
 
 @pytest.mark.asyncio()
 class TestValidation:
@@ -187,6 +195,15 @@ class TestValidation:
             await br.publish(b"x" * 9_000_000, queue)
             with pytest.raises(InvalidArgument, match="at most 10000000 bytes"):
                 await br.publish(b"x" * 10_000_001, queue)
+
+    async def test_request_size_limit(self, queue: str) -> None:
+        broker = PubSubBroker(project_id="p")
+
+        async with TestPubSubBroker(broker) as br:
+            # each message fits; the request carrying both does not
+            await br.publish_batch(b"x" * 4_000_000, b"y" * 4_000_000, topic=queue)
+            with pytest.raises(InvalidArgument, match="request is at most"):
+                await br.publish_batch(b"x" * 6_000_000, b"y" * 6_000_000, topic=queue)
 
     async def test_batch_limit(self, queue: str) -> None:
         broker = PubSubBroker(project_id="p")

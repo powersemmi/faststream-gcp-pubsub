@@ -53,6 +53,14 @@ async def test_publish_after_stop_raises() -> None:
         await publisher.publish("x")
 
 
+@pytest.mark.asyncio()
+async def test_declare_before_connect_raises() -> None:
+    broker = PubSubBroker(project_id="p", emulator_host="localhost:1")
+
+    with pytest.raises(IncorrectState, match="not connected"):
+        await broker.declare_topic("orders")
+
+
 @pytest.mark.connected()
 @pytest.mark.gcp()
 class TestConnection(BrokerConnectionTestcase):

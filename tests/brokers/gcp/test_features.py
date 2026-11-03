@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -44,15 +45,21 @@ class TestFeatures(PubSubTestcaseConfig):
 
         @broker.subscriber(*self.get_subscriber_params(queue)[0])
         async def handler(m: Any, msg: PubSubMessage) -> None:
-            mock(msg.headers, msg.correlation_id, msg.content_type)
+            mock(
+                msg.headers,
+                msg.correlation_id,
+                msg.content_type,
+                msg.raw_message.publish_time,
+            )
             event.set()
 
+        before = datetime.now(timezone.utc).replace(tzinfo=None)
         async with broker:
             await broker.start()
             await broker.publish({"a": 1}, queue, headers={"x": "1"}, correlation_id="c")
             await asyncio.wait_for(event.wait(), self.timeout)
 
-        headers, correlation_id, content_type = mock.call_args.args
+        headers, correlation_id, content_type, publish_time = mock.call_args.args
         assert headers == {
             "x": "1",
             "correlation_id": "c",
@@ -60,6 +67,9 @@ class TestFeatures(PubSubTestcaseConfig):
         }
         assert correlation_id == "c"
         assert content_type == "application/json"
+        # a naive UTC time; the emulator keeps whole seconds
+        after = datetime.now(timezone.utc).replace(tzinfo=None)
+        assert before.replace(microsecond=0) <= publish_time <= after
 
     async def test_response_sets_reply_ordering_key(
         self, queue: str, admin: Admin

@@ -38,10 +38,6 @@ class PubSubResponse(Response):
             _publish_type=PublishType.PUBLISH,
         )
 
-    @override
-    def get_publish_key(self) -> str | None:
-        return self.ordering_key or None
-
 
 class PubSubPublishCommand(BatchPublishCommand):
     """What a publish sends: bodies, topic, attributes and the ordering key."""

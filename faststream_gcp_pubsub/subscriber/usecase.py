@@ -30,10 +30,8 @@ if TYPE_CHECKING:
 
     from faststream_gcp_pubsub.broker.config import PubSubBrokerConfig
     from faststream_gcp_pubsub.message import PubSubMessage
-    from faststream_gcp_pubsub.schemas import PubSubSubscription
 
     from .config import PubSubSubscriberConfig
-    from .settler import FlowControl
 
 
 class PubSubBaseSubscriber(TasksMixin, SubscriberUsecase[PubSubRawMessage]):
@@ -69,18 +67,6 @@ class PubSubBaseSubscriber(TasksMixin, SubscriberUsecase[PubSubRawMessage]):
     def topic(self) -> str:
         """The topic the subscription is attached to, router prefix included."""
         return f"{self._outer_config.prefix}{self._topic.name}"
-
-    @property
-    def subscription_schema(self) -> "PubSubSubscription":
-        return self._subscription
-
-    @property
-    def topic_schema(self) -> "PubSubTopic":
-        return self._topic
-
-    @property
-    def flow_control(self) -> "FlowControl":
-        return self._flow
 
     @property
     def path(self) -> str:
