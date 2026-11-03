@@ -7,7 +7,7 @@ import pytest
 from faststream.exceptions import FeatureNotSupportedException
 from google.api_core.exceptions import InvalidArgument
 
-from faststream_gcp_pubsub import PubSubBroker, PubSubSubscription, PubSubTopic
+from faststream_gcp_pubsub import PubSub, PubSubBroker, PubSubTopic
 from faststream_gcp_pubsub.testing import InMemoryProducer, TestPubSubBroker
 from tests.brokers.base.testclient import BrokerTestclientTestcase
 
@@ -32,7 +32,7 @@ class TestTestclient(PubSubMemoryTestcaseConfig, BrokerTestclientTestcase):
         test_broker = self.get_broker()
         publisher = test_broker.publisher(PubSubTopic(f"{queue}1", declare=True))
 
-        @test_broker.subscriber(PubSubSubscription(queue, declare=True))
+        @test_broker.subscriber(PubSub(queue, declare=True))
         async def m(msg: Any) -> None:
             await publisher.publish(f"response: {msg}")
 

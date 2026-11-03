@@ -1,7 +1,7 @@
 from faststream import FastStream
 from pydantic import BaseModel
 
-from faststream_gcp_pubsub import PubSubBroker, PubSubSubscription
+from faststream_gcp_pubsub import PubSub, PubSubBroker
 
 
 class Order(BaseModel):
@@ -15,7 +15,7 @@ app = FastStream(broker)
 shipments = broker.publisher("shipments")
 
 
-@broker.subscriber(PubSubSubscription("orders-billing"), topic="orders")
+@broker.subscriber(PubSub("orders-billing"), topic="orders")
 @shipments
 async def bill(order: Order) -> dict[str, int]:
     # the return value is published to the `shipments` topic

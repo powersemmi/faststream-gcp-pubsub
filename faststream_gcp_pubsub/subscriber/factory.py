@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 from faststream._internal.endpoint.subscriber.call_item import CallsCollection
 
-from faststream_gcp_pubsub.schemas import PubSubSubscription, PubSubTopic
+from faststream_gcp_pubsub.schemas import PubSub, PubSubTopic
 
 from .config import PubSubSubscriberConfig, PubSubSubscriberSpecificationConfig
 from .settler import FlowControl
@@ -19,7 +19,7 @@ SubscriberType = PubSubDefaultSubscriber | PubSubConcurrentSubscriber
 
 def create_subscriber(
     *,
-    subscription: str | PubSubSubscription,
+    subscription: str | PubSub,
     topic: str | PubSubTopic | None,
     flow_control: FlowControl | None,
     # Subscriber args
@@ -33,9 +33,7 @@ def create_subscriber(
     include_in_schema: bool = True,
 ) -> SubscriberType:
     subscription_ = (
-        subscription
-        if isinstance(subscription, PubSubSubscription)
-        else PubSubSubscription(subscription)
+        subscription if isinstance(subscription, PubSub) else PubSub(subscription)
     )
     if topic is None:
         # A subscription named alone is taken as attached to the topic of the same name.

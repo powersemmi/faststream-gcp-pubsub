@@ -19,7 +19,7 @@ broker creates. The dead-letter topic of the policy is created too.
 | `labels` | Labels of a created topic. |
 | `message_retention_duration` | How long a created topic keeps messages for seek. |
 
-## PubSubSubscription
+## PubSub
 
 | Field | Meaning |
 | --- | --- |

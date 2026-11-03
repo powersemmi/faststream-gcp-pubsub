@@ -2,15 +2,15 @@ from faststream import FastStream, Logger
 
 from faststream_gcp_pubsub import (
     DeadLetterPolicy,
+    PubSub,
     PubSubBroker,
     PubSubMessage,
-    PubSubSubscription,
 )
 
 broker = PubSubBroker(project_id="my-project")
 app = FastStream(broker)
 
-billing = PubSubSubscription(
+billing = PubSub(
     "orders-billing",
     declare=True,
     dead_letter_policy=DeadLetterPolicy("orders-dead", max_delivery_attempts=5),

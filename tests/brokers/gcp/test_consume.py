@@ -12,9 +12,9 @@ from faststream.exceptions import IncorrectState
 from faststream_gcp_pubsub import (
     DeadLetterPolicy,
     FlowControl,
+    PubSub,
     PubSubBroker,
     PubSubMessage,
-    PubSubSubscription,
     PubSubTopic,
     RetryPolicy,
 )
@@ -58,7 +58,7 @@ class TestConsume(PubSubTestcaseConfig, BrokerRealConsumeTestcase):
         broker = self.get_broker(apply_types=True)
 
         @broker.subscriber(
-            PubSubSubscription(
+            PubSub(
                 queue,
                 declare=True,
                 dead_letter_policy=DeadLetterPolicy(
@@ -110,7 +110,7 @@ class TestConsume(PubSubTestcaseConfig, BrokerRealConsumeTestcase):
         broker = self.get_broker()
 
         @broker.subscriber(
-            PubSubSubscription(queue, declare=True, ack_deadline_seconds=10),
+            PubSub(queue, declare=True, ack_deadline_seconds=10),
             flow_control=FlowControl(ack_deadline=10),
         )
         async def handler(m: Any) -> None:
@@ -152,7 +152,7 @@ class TestConsume(PubSubTestcaseConfig, BrokerRealConsumeTestcase):
     ) -> None:
         broker = self.get_broker()
         sub = broker.subscriber(
-            PubSubSubscription(
+            PubSub(
                 queue,
                 declare=True,
                 ack_deadline_seconds=42,

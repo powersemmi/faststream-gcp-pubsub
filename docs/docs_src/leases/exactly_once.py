@@ -1,11 +1,11 @@
 from faststream import AckPolicy, FastStream, Logger
 
-from faststream_gcp_pubsub import PubSubBroker, PubSubMessage, PubSubSubscription
+from faststream_gcp_pubsub import PubSub, PubSubBroker, PubSubMessage
 
 broker = PubSubBroker(project_id="my-project")
 app = FastStream(broker)
 
-billing = PubSubSubscription(
+billing = PubSub(
     "orders-billing",
     declare=True,
     enable_exactly_once_delivery=True,

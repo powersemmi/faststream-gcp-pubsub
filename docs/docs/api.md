@@ -18,7 +18,7 @@
 
 ::: faststream_gcp_pubsub.PubSubTopic
 
-::: faststream_gcp_pubsub.PubSubSubscription
+::: faststream_gcp_pubsub.PubSub
 
 ::: faststream_gcp_pubsub.DeadLetterPolicy
 

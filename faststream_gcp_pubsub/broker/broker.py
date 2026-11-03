@@ -23,7 +23,7 @@ from faststream_gcp_pubsub.connection import ConnectionOptions, PubSubConnection
 from faststream_gcp_pubsub.message import PubSubRawMessage
 from faststream_gcp_pubsub.publisher.producer import PubSubProducer
 from faststream_gcp_pubsub.response import PubSubPublishCommand
-from faststream_gcp_pubsub.schemas import PubSubSubscription, PubSubTopic, resource_path
+from faststream_gcp_pubsub.schemas import PubSub, PubSubTopic, resource_path
 from faststream_gcp_pubsub.security import parse_security
 from faststream_gcp_pubsub.subscriber.usecase import PubSubBaseSubscriber
 
@@ -210,7 +210,7 @@ class PubSubBroker(
 
     async def declare_subscription(
         self,
-        subscription: str | PubSubSubscription,
+        subscription: str | PubSub,
         topic: str | PubSubTopic,
     ) -> str:
         """Create a subscription attached to ``topic`` unless it exists; the topic must exist.
@@ -219,9 +219,7 @@ class PubSubBroker(
             The full resource name of the subscription.
         """
         subscription_ = (
-            subscription
-            if isinstance(subscription, PubSubSubscription)
-            else PubSubSubscription(subscription)
+            subscription if isinstance(subscription, PubSub) else PubSub(subscription)
         )
         topic_name = topic.name if isinstance(topic, PubSubTopic) else topic
         project = self.config.project_id

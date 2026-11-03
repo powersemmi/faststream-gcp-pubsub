@@ -22,7 +22,7 @@ resources, in the test broker routing and in the AsyncAPI document.
 
 ## Names as declarations
 
-Both arguments also take a declaration, [`PubSubSubscription`](declaring-resources.md) and
+Both arguments also take a declaration, [`PubSub`](declaring-resources.md) and
 `PubSubTopic`, which describes how to create the resource:
 
 ```python title="service.py"

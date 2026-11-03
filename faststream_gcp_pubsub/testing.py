@@ -16,7 +16,7 @@ from faststream_gcp_pubsub.broker.broker import PubSubBroker
 from faststream_gcp_pubsub.limits import validate_publish_request, validate_resource_id
 from faststream_gcp_pubsub.message import PubSubRawMessage
 from faststream_gcp_pubsub.publisher.producer import PubSubProducer
-from faststream_gcp_pubsub.schemas import PubSubSubscription, resource_path
+from faststream_gcp_pubsub.schemas import PubSub, resource_path
 
 if TYPE_CHECKING:
     from faststream_gcp_pubsub.publisher.usecase import PubSubPublisher
@@ -85,9 +85,7 @@ class TestPubSubBroker(TestBroker[PubSubBroker, Any], broker=PubSubBroker):
 
         # Under `with_real` the subscription is created on the service only when the
         # publisher declares its topic: a test never adds resources nobody asked for.
-        subscription = PubSubSubscription(
-            publisher.topic, declare=publisher.topic_schema.declare
-        )
+        subscription = PubSub(publisher.topic, declare=publisher.topic_schema.declare)
         sub = cast(
             "PubSubBaseSubscriber", broker.subscriber(subscription, persistent=False)
         )

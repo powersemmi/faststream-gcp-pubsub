@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 __all__ = (
     "DeadLetterPolicy",
-    "PubSubSubscription",
+    "PubSub",
     "PubSubTopic",
     "RetryPolicy",
     "resource_path",
@@ -94,7 +94,7 @@ class PubSubTopic:
 
 
 @dataclass(frozen=True, slots=True)
-class PubSubSubscription:
+class PubSub:
     """A Pub/Sub subscription and the settings a created one gets.
 
     The settings apply when the broker creates the subscription (``declare=True``); an existing

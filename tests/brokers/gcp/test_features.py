@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from faststream_gcp_pubsub import PubSubMessage, PubSubResponse, PubSubSubscription
+from faststream_gcp_pubsub import PubSub, PubSubMessage, PubSubResponse
 
 from .basic import PubSubTestcaseConfig
 from .conftest import Admin
@@ -20,9 +20,7 @@ class TestFeatures(PubSubTestcaseConfig):
         broker = self.get_broker(apply_types=True)
         seen: list[int] = []
 
-        @broker.subscriber(
-            PubSubSubscription(queue, declare=True, enable_message_ordering=True)
-        )
+        @broker.subscriber(PubSub(queue, declare=True, enable_message_ordering=True))
         async def handler(m: int, msg: PubSubMessage) -> None:
             assert msg.ordering_key == "k"
             seen.append(m)
@@ -105,7 +103,7 @@ class TestFeatures(PubSubTestcaseConfig):
         broker = self.get_broker()
 
         sub = broker.subscriber(
-            PubSubSubscription(queue, declare=True, enable_exactly_once_delivery=True)
+            PubSub(queue, declare=True, enable_exactly_once_delivery=True)
         )
 
         @sub

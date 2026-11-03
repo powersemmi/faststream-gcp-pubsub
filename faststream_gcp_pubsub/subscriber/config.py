@@ -8,14 +8,14 @@ from faststream._internal.constants import EMPTY
 from faststream.middlewares.acknowledgement.config import AckPolicy
 
 from faststream_gcp_pubsub.broker.config import PubSubBrokerConfig
-from faststream_gcp_pubsub.schemas import PubSubSubscription, PubSubTopic
+from faststream_gcp_pubsub.schemas import PubSub, PubSubTopic
 
 from .settler import FlowControl
 
 
 @dataclass(kw_only=True)
 class PubSubSubscriberSpecificationConfig(SubscriberSpecificationConfig):
-    subscription: PubSubSubscription
+    subscription: PubSub
     topic: PubSubTopic
 
 
@@ -23,7 +23,7 @@ class PubSubSubscriberSpecificationConfig(SubscriberSpecificationConfig):
 class PubSubSubscriberConfig(SubscriberUsecaseConfig):
     _outer_config: "PubSubBrokerConfig" = field(default_factory=PubSubBrokerConfig)
 
-    subscription: PubSubSubscription
+    subscription: PubSub
     topic: PubSubTopic
     flow_control: FlowControl
 

@@ -4,8 +4,8 @@ from faststream import FastStream
 
 from faststream_gcp_pubsub import (
     DeadLetterPolicy,
+    PubSub,
     PubSubBroker,
-    PubSubSubscription,
     PubSubTopic,
     RetryPolicy,
 )
@@ -20,7 +20,7 @@ orders = PubSubTopic(
     message_retention_duration=timedelta(days=1),
 )
 
-billing = PubSubSubscription(
+billing = PubSub(
     "orders-billing",
     declare=True,
     ack_deadline_seconds=30,

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from faststream._internal.parser import CodecProto
     from faststream._internal.types import BrokerMiddleware, CustomCallable
 
-    from faststream_gcp_pubsub.schemas import PubSubSubscription, PubSubTopic
+    from faststream_gcp_pubsub.schemas import PubSub, PubSubTopic
     from faststream_gcp_pubsub.subscriber.settler import FlowControl
 
 
@@ -58,7 +58,7 @@ class PubSubRoute(SubscriberRoute):
         self,
         call: Callable[..., "SendableMessage"]
         | Callable[..., Awaitable["SendableMessage"]],
-        subscription: "str | PubSubSubscription",
+        subscription: "str | PubSub",
         *,
         topic: "str | PubSubTopic | None" = None,
         publishers: Iterable[PubSubPublisher] = (),

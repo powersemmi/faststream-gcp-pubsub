@@ -4,7 +4,7 @@ from typing import Any, overload
 
 from typing_extensions import Self, override
 
-from faststream_gcp_pubsub import PubSubBroker, PubSubRouter, PubSubSubscription
+from faststream_gcp_pubsub import PubSub, PubSubBroker, PubSubRouter
 from tests.brokers.base.basic import BaseTestcaseConfig
 
 from .conftest import Settings
@@ -23,7 +23,7 @@ class PubSubTestcaseConfig(BaseTestcaseConfig[PubSubBroker]):
     def get_subscriber_params(
         self, subscription: str, *args: Any, **kwargs: Any
     ) -> tuple[tuple[Any, ...], dict[str, Any]]:
-        return (PubSubSubscription(subscription, declare=True), *args), kwargs
+        return (PubSub(subscription, declare=True), *args), kwargs
 
     def get_router(self, **kwargs: Any) -> PubSubRouter:
         return PubSubRouter(**kwargs)

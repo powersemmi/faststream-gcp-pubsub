@@ -1,6 +1,6 @@
 from faststream import FastStream
 
-from faststream_gcp_pubsub import PubSubBroker, PubSubSubscription, PubSubTopic
+from faststream_gcp_pubsub import PubSub, PubSubBroker, PubSubTopic
 
 broker = PubSubBroker(project_id="my-project")
 app = FastStream(broker)
@@ -10,7 +10,7 @@ app = FastStream(broker)
 async def declare() -> None:
     topic = await broker.declare_topic(PubSubTopic("orders", labels={"team": "billing"}))
     subscription = await broker.declare_subscription(
-        PubSubSubscription("orders-billing", ack_deadline_seconds=30),
+        PubSub("orders-billing", ack_deadline_seconds=30),
         topic="orders",
     )
     # both return the full resource name

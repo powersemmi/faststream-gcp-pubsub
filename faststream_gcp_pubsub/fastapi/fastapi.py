@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from starlette.types import ASGIApp, Lifespan
 
     from faststream_gcp_pubsub.publisher.usecase import PubSubPublisher
-    from faststream_gcp_pubsub.schemas import PubSubSubscription, PubSubTopic
+    from faststream_gcp_pubsub.schemas import PubSub, PubSubTopic
     from faststream_gcp_pubsub.subscriber.settler import FlowControl
     from faststream_gcp_pubsub.subscriber.usecase import (
         PubSubConcurrentSubscriber,
@@ -155,7 +155,7 @@ class PubSubRouter(StreamRouter[PubSubRawMessage]):
     @overload  # type: ignore[override]
     def subscriber(
         self,
-        subscription: "str | PubSubSubscription",
+        subscription: "str | PubSub",
         *,
         topic: "str | PubSubTopic | None" = None,
         flow_control: Optional["FlowControl"] = None,
@@ -185,7 +185,7 @@ class PubSubRouter(StreamRouter[PubSubRawMessage]):
     @overload
     def subscriber(
         self,
-        subscription: "str | PubSubSubscription",
+        subscription: "str | PubSub",
         *,
         topic: "str | PubSubTopic | None" = None,
         flow_control: Optional["FlowControl"] = None,
@@ -215,7 +215,7 @@ class PubSubRouter(StreamRouter[PubSubRawMessage]):
     @override
     def subscriber(
         self,
-        subscription: "str | PubSubSubscription",
+        subscription: "str | PubSub",
         *,
         topic: "str | PubSubTopic | None" = None,
         flow_control: Optional["FlowControl"] = None,
@@ -245,7 +245,7 @@ class PubSubRouter(StreamRouter[PubSubRawMessage]):
             "PubSubDefaultSubscriber | PubSubConcurrentSubscriber",
             super().subscriber(
                 # The base annotates the name as a string; the broker's registrator it forwards
-                # to takes a `PubSubSubscription` as well.
+                # to takes a `PubSub` as well.
                 subscription,  # type: ignore[arg-type]
                 topic=topic,
                 flow_control=flow_control,
