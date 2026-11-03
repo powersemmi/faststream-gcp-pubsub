@@ -10,4 +10,6 @@ accept = ["200..=299", "429"]
 exclude = [
     # addresses of the reader's own running application and emulator
     '^https?://(localhost|127\.0\.0\.1)',
+    # the Coveralls report page answers every bot with 403; its badge image is still checked
+    '^https://coveralls\.io/github/',
 ]

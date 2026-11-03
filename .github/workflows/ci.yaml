@@ -348,6 +348,14 @@ jobs:
           # the floor of the whole package; each job alone covers less, so it is not in the config
           uv run --no-sync coverage report --fail-under 90
           uv run --no-sync coverage xml
+      # A repository Coveralls does not know yet rejects the upload; that is no reason to fail CI.
+      - name: Upload the combined coverage to Coveralls
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: coverage.xml
+          format: cobertura
+          fail-on-error: false
       # The total hides a pull request that ships untested: 90% of the lines it changes in the
       # package have to run under some job.
       - name: Require the changed lines of the package to be covered
