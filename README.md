@@ -1,5 +1,13 @@
 # faststream-gcp-pubsub
 
+<p align="center">
+  <a href="https://github.com/powersemmi/faststream-gcp-pubsub/actions/workflows/ci.yaml"><img src="https://github.com/powersemmi/faststream-gcp-pubsub/actions/workflows/ci.yaml/badge.svg" alt="CI"></a>
+  <a href="https://pypi.org/project/faststream-gcp-pubsub/"><img src="https://img.shields.io/pypi/v/faststream-gcp-pubsub.svg" alt="PyPI"></a>
+  <a href="https://pypi.org/project/faststream-gcp-pubsub/"><img src="https://img.shields.io/pypi/dm/faststream-gcp-pubsub.svg" alt="Downloads"></a>
+  <a href="https://pypi.org/project/faststream-gcp-pubsub/"><img src="https://img.shields.io/pypi/pyversions/faststream-gcp-pubsub.svg" alt="Supported Python versions"></a>
+  <a href="https://github.com/powersemmi/faststream-gcp-pubsub/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/faststream-gcp-pubsub.svg" alt="License"></a>
+</p>
+
 A [Google Cloud Pub/Sub](https://cloud.google.com/pubsub) broker for
 [FastStream](https://github.com/ag2ai/faststream), maintained by the community.
 
